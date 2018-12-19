@@ -3,7 +3,10 @@
 
 # # Final Project - Dash
 
-# In[1]:
+# ### Benjamin Beckenbauer
+# Section A
+
+# In[ ]:
 
 
 import dash
@@ -16,13 +19,16 @@ app = dash.Dash(__name__)
 server = app.server
     
 app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
-    
+
 df = pd.read_csv('nama_10_gdp_1_Data.csv')
 df = df[df['UNIT'] == "Current prices, million euro"]
+df = df[~df['GEO'].str.contains('Euro')]
 locs = df['GEO'].unique()
 kpis = df['NA_ITEM'].unique()
 
 print(df.head())
+print(locs)
+print(kpis)
 
 app.layout = html.Div([
     html.Div([
@@ -31,9 +37,15 @@ app.layout = html.Div([
                 id = 'xaxis-column',
                 options = [{'label': i, 'value': i} for i in kpis],
                 value = 'Gross domestic product at market prices'
-            ),   
+            ),
+            dcc.RadioItems(
+                id='xaxis-type',
+                options=[{'label': i, 'value': i} for i in ['Linear', 'Log']],
+                value = 'Linear',
+                labelStyle={'display': 'inline-block'}
+            ),
         ],
-        style = {'width': '48%', 'display': 'inline-block'}),
+        style = {'width': '48%', 'display': 'inline-block', 'padding': 10}),
 
         html.Div([
             dcc.Dropdown(
@@ -41,7 +53,7 @@ app.layout = html.Div([
                 options = [{'label': i, 'value': i} for i in kpis],
                 value = 'Value added, gross'
             ), 
-        ],style = {'width': '48%', 'float': 'right', 'display': 'inline-block'})
+        ],style = {'width': '48%', 'float': 'right', 'display': 'inline-block','padding': 10})
     ]),
 
     dcc.Graph(id = 'indicator-graphic'),
@@ -62,11 +74,11 @@ app.layout = html.Div([
             dcc.Dropdown(
                 id = 'country',
                 options = [{'label': i, 'value': i} for i in locs],
-                value = 'European Union (current composition)'
+                value = 'Belgium'
             ),
             
         ],
-        style = {'width': '48%', 'display': 'inline-block'}),
+        style = {'width': '48%', 'display': 'inline-block', 'padding': 10}),
 
         html.Div([
             dcc.Dropdown(
@@ -75,7 +87,7 @@ app.layout = html.Div([
                 value = 'Gross domestic product at market prices'
             ),
             
-        ],style = {'width': '48%', 'float': 'right', 'display': 'inline-block'})
+        ],style = {'width': '48%', 'float': 'right', 'display': 'inline-block', 'padding': 10})
     ]),
     dcc.Graph(id = 'indicator-graphic-b')
     
@@ -85,9 +97,11 @@ app.layout = html.Div([
     dash.dependencies.Output('indicator-graphic', 'figure'),
     [dash.dependencies.Input('xaxis-column', 'value'),
      dash.dependencies.Input('yaxis-column', 'value'),
-     dash.dependencies.Input('year--slider', 'value')])
+     dash.dependencies.Input('year--slider', 'value'),
+     dash.dependencies.Input('xaxis-type', 'value')])
+
 def refreshgr(xaxis_column_name, yaxis_column_name,
-                 year_value):
+                 year_value, xaxis_type):
     df2 = df[df['TIME'] == year_value]
     
     return {
@@ -108,14 +122,15 @@ def refreshgr(xaxis_column_name, yaxis_column_name,
         'layout': go.Layout(
             xaxis = {
                 'title': xaxis_column_name,
-                'type': 'linear' 
+                'type': 'linear' if xaxis_type == 'Linear' else 'log' 
             },
             yaxis = {
                 'title': yaxis_column_name,
                 'type': 'linear' 
             },
-            margin = {'l': 40, 'b': 40, 't': 10, 'r': 0},
-            hovermode = 'closest'
+            margin = {'l': 80, 'b': 80, 't': 60, 'r': 40},
+            hovermode = 'closest',
+            title = 'Economic & financial data: Overview EU countries'
         )
     }
 
@@ -145,8 +160,9 @@ def refreshgr2(country_name, yaxis_column_b_name,):
                 'title': yaxis_column_b_name,
                 'type': 'linear' 
             },
-            margin = {'l': 40, 'b': 40, 't': 10, 'r': 0},
-            hovermode = 'closest'
+            margin = {'l': 80, 'b': 80, 't': 60, 'r': 40},
+            hovermode = 'closest',
+            title = 'Economic & financial data: Overview selected EU country'
         )
     }
 
